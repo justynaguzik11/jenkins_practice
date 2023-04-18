@@ -3,9 +3,17 @@ import requests
 
 class Version:
     def __init__(self, major=1, minor=0, micro=0):
+        """
+        Tests:
+            >>> Version(1, -2, 0)
+            Traceback (most recent call last):
+            ValueError: invalid number, must be positive
+        """
         self.major = major
         self.minor = minor
         self.micro = micro
+        if major < 0 or minor < 0 or micro < 0:
+            raise ValueError('invalid number, must be positive')
 
     def __str__(self):
         """
@@ -37,6 +45,10 @@ class Version:
             raise TypeError('wrong type')
 
 
+class DownloadError(Exception):
+    pass
+
+
 class Client:
     @staticmethod
     def download_specific(filename: str):
@@ -44,7 +56,9 @@ class Client:
         credentials = ('justyna.guzik11@gmail.com',
                        'cmVmdGtuOjAxOjE3MTMxMDMxMzA6V2ZMSHpYeVc1RExVUVJoZFFnVUJVTzZ5dVND')
         r = requests.get(url, auth=credentials)
-        print(r.json())
+
+        if not 199 < r.status_code < 300:
+            raise DownloadError
 
         with open(filename, 'wb') as f:
             f.write(r.content)
@@ -60,24 +74,24 @@ class Client:
         file_list = r.json()['children']
         current_latest = Version(0, 0, 0)
         for file in file_list:
-            filename = file['uri']
-            filename = filename.lstrip('/file_').rstrip('.json')
+            filename = file['uri'].lstrip('/file_').rstrip('.json')
             numbers = [int(num) for num in filename.split('.')]
-            current_latest = max(current_latest, Version(numbers[0], numbers[1], numbers[2]))
-        print(current_latest)
-        #  download_specific(latest)
+            if current_latest < (current := Version(numbers[0], numbers[1], numbers[2])):
+                current_latest = current
+        latest_filename = 'file_' + str(current_latest) + '.json'
+        Client.download_specific(latest_filename)
 
     @staticmethod
-    def upload_new(filename='file'):
-        filename += '_1.0.2.json'
+    def upload_new(filename: str):
         url = 'https://jguzik.jfrog.io/artifactory/generic-local/' + filename
         credentials = ('justyna.guzik11@gmail.com',
                        'cmVmdGtuOjAxOjE3MTMxMDMxMzA6V2ZMSHpYeVc1RExVUVJoZFFnVUJVTzZ5dVND')
-        r = requests.put(url, filename, auth=credentials)
-        print(r.text)
+        r = requests.put(url, data=open(filename, 'rb'), auth=credentials)
+
+    # delete_specific()
 
 
 python_client = Client()
-# python_client.download_specific('file_1.0.0.json')
+# python_client.download_specific('file_1.0.1.json')
+# python_client.upload_new('file_1.0.2.json')
 python_client.download_latest()
-# python_client.upload_new('file')
