@@ -45,20 +45,26 @@ class Version:
             raise TypeError('wrong type')
 
 
-class DownloadError(Exception):
+class DownloadArtifactError(Exception):
+    pass
+
+
+class DeleteArtifactError(Exception):
     pass
 
 
 class Client:
+    # TODO credentials as argument, passed in Jenkins
+    credentials = ('justyna.guzik11@gmail.com',
+                   'cmVmdGtuOjAxOjE3MTMxMDMxMzA6V2ZMSHpYeVc1RExVUVJoZFFnVUJVTzZ5dVND')
+
     @staticmethod
     def download_specific(filename: str):
         url = 'https://jguzik.jfrog.io/artifactory/generic-local/' + filename
-        credentials = ('justyna.guzik11@gmail.com',
-                       'cmVmdGtuOjAxOjE3MTMxMDMxMzA6V2ZMSHpYeVc1RExVUVJoZFFnVUJVTzZ5dVND')
-        r = requests.get(url, auth=credentials)
+        r = requests.get(url, auth=Client.credentials)
 
         if not 199 < r.status_code < 300:
-            raise DownloadError
+            raise DownloadArtifactError
 
         with open(filename, 'wb') as f:
             f.write(r.content)
@@ -66,9 +72,7 @@ class Client:
     @staticmethod
     def download_latest():
         url = 'https://jguzik.jfrog.io/artifactory/api/storage/generic-local'
-        credentials = ('justyna.guzik11@gmail.com',
-                       'cmVmdGtuOjAxOjE3MTMxMDMxMzA6V2ZMSHpYeVc1RExVUVJoZFFnVUJVTzZ5dVND')
-        r = requests.get(url, auth=credentials)
+        r = requests.get(url, auth=Client.credentials)
 
         #  parse the response
         file_list = r.json()['children']
@@ -84,14 +88,18 @@ class Client:
     @staticmethod
     def upload_new(filename: str):
         url = 'https://jguzik.jfrog.io/artifactory/generic-local/' + filename
-        credentials = ('justyna.guzik11@gmail.com',
-                       'cmVmdGtuOjAxOjE3MTMxMDMxMzA6V2ZMSHpYeVc1RExVUVJoZFFnVUJVTzZ5dVND')
-        r = requests.put(url, data=open(filename, 'rb'), auth=credentials)
+        r = requests.put(url, data=open(filename, 'rb'), auth=Client.credentials)
 
-    # delete_specific()
+    @staticmethod
+    def delete_specific(filename: str):
+        url = 'https://jguzik.jfrog.io/artifactory/generic-local/' + filename
+        r = requests.delete(url, auth=Client.credentials)
+        if not 199 < r.status_code < 300:
+            raise DeleteArtifactError
 
 
 python_client = Client()
 # python_client.download_specific('file_1.0.1.json')
-# python_client.upload_new('file_1.0.2.json')
+python_client.upload_new('file_1.0.2.json')
 python_client.download_latest()
+# python_client.delete_specific('file_1.0.2.json')
