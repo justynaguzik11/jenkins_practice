@@ -60,6 +60,8 @@ class Client:
 
     @staticmethod
     def download_specific(filename: str):
+        # where to store downloaded (jenkins artifact?)
+        # check if it needs additional configuration in jenkins
         url = 'https://jguzik.jfrog.io/artifactory/generic-local/' + filename
         r = requests.get(url, auth=Client.credentials)
 
