@@ -8,7 +8,7 @@ timeout(time: 15, unit: 'MINUTES') {
             stage('Run') {
                 docker.build('python-docker', ".").inside {
                     script {
-                        cmd = "python3 client.py"
+                        cmd = "python3 python_client/client.py"
                         sh(script: cmd)
                     }
                 }
