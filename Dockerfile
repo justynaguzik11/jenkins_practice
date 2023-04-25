@@ -4,7 +4,7 @@ FROM python:3.8-slim-buster
 
 WORKDIR /app
 
-COPY jenkins_practice/requirements.txt requirements.txt
+COPY python_client/requirements.txt requirements.txt
 RUN pip3 install -r requirements.txt
 
 COPY . .
